@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Checkpoints and backups
+_antigos_checkpoints_desconsiderados/
+*.zip
+*.bak*
+*.checkpoint*
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
