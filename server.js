@@ -78,7 +78,7 @@ function resolveFile(rawUrl) {
   }
 
   // Fallback: search standard asset directories
-  for (const dir of ['css', 'images', 'media', 'js']) {
+  for (const dir of ['css', 'images', 'media', 'js', 'video dos cards', 'videos dos cards']) {
     const f = tryFile(path.join(ROOT, dir, filename));
     if (f) return f;
   }
