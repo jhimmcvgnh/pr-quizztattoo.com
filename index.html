@@ -274,7 +274,83 @@
     });
   }
 
-  // Colocar os vídeos dos cards na tela de menu APENAS quando o menu estiver aberto
+  // Controla a reprodução dos vídeos dos cards no scroll da página principal:
+  // - Só roda o vídeo do card que estiver ativamente no viewport/em foco
+  // - Ao scrollar para baixo (ou cima), o card anterior para de rodar e o novo card começa a rodar
+  // - O sistema de loop contínuo funciona perfeitamente
+  function updateCardVideosPlayback() {
+    const cardsSection = document.querySelector('#home-expertises, .home__expertises');
+    const cardsContainer = document.querySelector('.home__expertises__cards');
+    const cards = document.querySelectorAll('.home__expertises__card');
+    const navButtons = document.querySelectorAll('.page__nav__button');
+
+    if (!cardsSection || cards.length === 0) return;
+
+    // Verificar se a seção de cards está visível na tela
+    const sectionTarget = cardsContainer || cardsSection;
+    const sectionRect = sectionTarget.getBoundingClientRect();
+    const isSectionInView = sectionRect.bottom > 100 && sectionRect.top < window.innerHeight - 100;
+
+    if (!isSectionInView) {
+      // Fora da seção de cards (ex: no topo na hero ou lá embaixo no contato): pausar todos
+      cards.forEach(card => {
+        const video = card.querySelector('video');
+        if (video && !video.paused) {
+          video.pause();
+        }
+      });
+      return;
+    }
+
+    // Seção está visível. Determinar qual card é o ativo no momento:
+    let activeIndex = 0;
+    navButtons.forEach((btn, idx) => {
+      if (btn.classList.contains('selected')) {
+        activeIndex = idx;
+      }
+    });
+
+    cards.forEach((card, idx) => {
+      const video = card.querySelector('video');
+      if (!video) return;
+
+      // Garantir atributos essenciais para loop contínuo e sem bloqueio do navegador
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      if (!video.hasAttribute('loop')) video.setAttribute('loop', '');
+      if (!video.hasAttribute('muted')) video.setAttribute('muted', '');
+      if (!video.hasAttribute('playsinline')) video.setAttribute('playsinline', '');
+
+      // Garantia de reinício em loop caso o evento 'ended' dispare
+      if (!video.__loopListenerAttached) {
+        video.__loopListenerAttached = true;
+        video.addEventListener('ended', function() {
+          this.currentTime = 0;
+          this.play().catch(() => {});
+        });
+      }
+
+      // Verificar opacidade do conteúdo interno do card gerenciada pelo GSAP ScrollTrigger
+      const inner = card.querySelector('.home__expertises__card__inner__inner__inner');
+      const innerOpacity = inner ? parseFloat(window.getComputedStyle(inner).opacity) : 1;
+
+      // O card é considerado ativo se coincide com o índice selecionado e seu conteúdo está visível
+      const isCardActive = (idx === activeIndex && innerOpacity > 0.15);
+
+      if (isCardActive) {
+        if (video.paused) {
+          video.play().catch(() => {});
+        }
+      } else {
+        if (!video.paused) {
+          video.pause();
+        }
+      }
+    });
+  }
+
+  // Controla os vídeos do Menu: só toca o vídeo do item que estiver com o cursor/tela por cima
   function applyMenuVideos() {
     const isMenuOpen = document.body && document.body.classList.contains('menu-open');
     const menuItems = document.querySelectorAll('.nav__menu__menu__middle__expertise');
@@ -285,7 +361,7 @@
     ];
 
     if (!isMenuOpen) {
-      // Menu fechado: pausar e remover qualquer vídeo para não carregar nem exibir
+      // Menu fechado: pausar e remover qualquer vídeo para não carregar nem consumir recursos
       menuItems.forEach((item) => {
         const imgContainer = item.querySelector('.nav__menu__menu__middle__expertise__img');
         if (imgContainer) {
@@ -304,7 +380,7 @@
       return;
     }
 
-    // Menu aberto: criar, carregar e reproduzir os vídeos somente agora
+    // Menu aberto: cria e configura os vídeos (inicialmente pausados até o usuário focar/passar por cima)
     menuItems.forEach((item, idx) => {
       const imgContainer = item.querySelector('.nav__menu__menu__middle__expertise__img');
       if (imgContainer && idx < videos.length) {
@@ -316,7 +392,6 @@
           video.playsInline = true;
           video.setAttribute('playsinline', '');
           video.setAttribute('muted', '');
-          video.setAttribute('autoplay', '');
           video.setAttribute('loop', '');
           video.setAttribute('preload', 'auto');
           video.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:12px;display:block;';
@@ -325,22 +400,69 @@
           source.src = videos[idx];
           video.appendChild(source);
           imgContainer.appendChild(video);
-          video.play().catch(() => {});
+
+          // Garantir loop contínuo
+          video.addEventListener('ended', function() {
+            this.currentTime = 0;
+            this.play().catch(() => {});
+          });
         } else {
           const source = video.querySelector('source');
           if (source && source.getAttribute('src') !== videos[idx]) {
             source.src = videos[idx];
             video.load();
           }
-          if (video.paused) {
-            video.play().catch(() => {});
-          }
+        }
+
+        // Adicionar eventos de hover no item do menu para só rodar quando estiver com o cursor por cima
+        if (!item.__hoverEventsAttached) {
+          item.__hoverEventsAttached = true;
+
+          item.addEventListener('mouseenter', function() {
+            // Pausar os outros vídeos do menu
+            menuItems.forEach(other => {
+              if (other !== item) {
+                const otherVid = other.querySelector('video');
+                if (otherVid && !otherVid.paused) otherVid.pause();
+              }
+            });
+            const v = item.querySelector('video');
+            if (v && v.paused) {
+              v.play().catch(() => {});
+            }
+          });
+
+          item.addEventListener('mouseleave', function() {
+            const v = item.querySelector('video');
+            if (v && !v.paused) {
+              v.pause();
+            }
+          });
         }
       }
     });
+
+    // Se estiver em dispositivo touch / mobile, usar IntersectionObserver no menu
+    if (window.matchMedia('(hover: none)').matches) {
+      if (!window.__menuIntersectionObserver) {
+        window.__menuIntersectionObserver = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            const v = entry.target.querySelector('video');
+            if (v) {
+              if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                v.play().catch(() => {});
+              } else {
+                v.pause();
+              }
+            }
+          });
+        }, { threshold: [0.2, 0.5, 0.8] });
+      }
+      menuItems.forEach(item => window.__menuIntersectionObserver.observe(item));
+    }
   }
 
-  // Observador específico para mudanças na classe menu-open do body
+  // Observador para mudanças na classe menu-open do body
   const menuObserver = new MutationObserver(function(mutations) {
     for (const m of mutations) {
       if (m.type === 'attributes' && m.attributeName === 'class') {
@@ -364,6 +486,20 @@
       setTimeout(applyMenuVideos, 300);
     }
   }, true);
+
+  // Monitoramento contínuo e suave do scroll para os cards da página principal
+  window.addEventListener('scroll', updateCardVideosPlayback, { passive: true });
+  window.addEventListener('resize', updateCardVideosPlayback, { passive: true });
+
+  let lastCardCheck = 0;
+  function cardPlaybackLoop(now) {
+    if (now - lastCardCheck > 80) {
+      lastCardCheck = now;
+      updateCardVideosPlayback();
+    }
+    requestAnimationFrame(cardPlaybackLoop);
+  }
+  requestAnimationFrame(cardPlaybackLoop);
 
   // Tratamento para vídeos na tela principal caso ocorra erro (não aparecem na tela principal se der erro)
   function handleCardVideoErrors() {
@@ -399,6 +535,7 @@
     ensureCardsDivider();
     updateAllContactLinksDOM();
     applyMenuVideos();
+    updateCardVideosPlayback();
     handleCardVideoErrors();
 
     // Atualiza links de redirecionamento para o novo link
