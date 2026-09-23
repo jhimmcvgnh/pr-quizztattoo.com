@@ -144,6 +144,7 @@
 (function() {
   const desiredHtml = '<p>Não imagine seu estúdio de tatuagem<br>com site e sistema.<br><em>Experimente</em>.</p>';
   const TARGET_REDIRECT_URL = 'https://sitetestetattoo-com.vercel.app';
+  const INICIAR_PROJETO_URL = 'https://sitetestetattoo-com.vercel.app';
   const WHATSAPP_URL = 'https://wa.me/5596999130553?text=Ol%C3%A1!%20Tenho%20interesse%20em%20saber%20mais%20sobre%20o%20site%20e%20sistema%20para%20meu%20est%C3%BAdio%20de%20tatuagem.';
 
   // If directly accessing /contact route, redirect immediately to WhatsApp
@@ -160,7 +161,7 @@
     const cls = (link.className || '') + ' ' + ((link.parentElement && link.parentElement.className) || '');
     
     // Explicit exclusions (e.g. quiz redirect buttons, other nav items)
-    if (cls.includes('page__button__scroll') || cls.includes('home__to__contact__scroll') || cls.includes('home__scroll__divider__link')) {
+    if (cls.includes('page__button__language') || cls.includes('page__button__scroll') || cls.includes('home__to__contact__scroll') || cls.includes('home__scroll__divider__link')) {
       return false;
     }
 
@@ -180,7 +181,55 @@
   }
 
   // Intercept any click on contact elements in capture phase
-  function handleContactRedirect(e) {
+    // Redirection for all Planejar Projeto elements (Hero, Menu, About, Cards)
+  const QUIZZ_URL = 'https://jimdevtattooquizz-com.vercel.app/';
+  function isPlanejarProjetoBtn(el) {
+    if (!el) return false;
+    const btn = el.closest('a, button, [role="link"], [role="button"]') || el;
+    const txt = (btn.textContent || '').trim().toLowerCase();
+    const cls = (btn.className || '') + ' ' + ((btn.parentElement && btn.parentElement.className) || '');
+    return (
+      cls.includes('page__button__language') ||
+      cls.includes('home__about__right') ||
+      cls.includes('home__expertises__card') ||
+      txt === 'planejar projeto' ||
+      txt.includes('planejar projeto')
+    );
+  }
+
+  function handlePlanejarProjetoRedirect(e) {
+    const btn = e.target.closest('.page__button__language, .home__about__right a.page__button, .home__expertises__card__middle a.page__button, .home__expertises__card__top__button, .home__expertises__card a.page__button');
+    if (btn || isPlanejarProjetoBtn(e.target)) {
+      // Make sure scroll divider button is not intercepted
+      if (e.target.closest('.page__button__scroll, .home__scroll__divider')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if (e.button === 1 || e.ctrlKey || e.metaKey) {
+        window.open(QUIZZ_URL, '_blank');
+      } else {
+        window.location.href = QUIZZ_URL;
+      }
+      return false;
+    }
+  }
+
+  document.addEventListener('click', handlePlanejarProjetoRedirect, true);
+  document.addEventListener('auxclick', handlePlanejarProjetoRedirect, true);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const btn = e.target.closest('.page__button__language, .home__about__right a.page__button, .home__expertises__card__middle a.page__button, .home__expertises__card__top__button, .home__expertises__card a.page__button');
+      if (btn || isPlanejarProjetoBtn(e.target)) {
+        if (e.target.closest('.page__button__scroll, .home__scroll__divider')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        window.location.href = QUIZZ_URL;
+      }
+    }
+  }, true);
+
+function handleContactRedirect(e) {
     const link = e.target.closest('a, button, [role="button"], [role="link"]');
     if (link && isContactElement(link)) {
       e.preventDefault();
@@ -207,7 +256,7 @@
 
   // Redirection handler for INICIAR PROJETO buttons
   function handleScrollButtonRedirect(e) {
-    const btn = e.target.closest('.page__button__scroll, .home__to__contact__scroll, .home__scroll__divider__link, .home__expertises__card__top__button, .home__expertises__card__middle a.page__button');
+    const btn = e.target.closest('.page__button__scroll, .home__to__contact__scroll, .home__scroll__divider__link');
     if (btn) {
       e.preventDefault();
       e.stopPropagation();
@@ -224,7 +273,7 @@
   document.addEventListener('auxclick', handleScrollButtonRedirect, true);
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' || e.key === ' ') {
-      const btn = e.target.closest('.page__button__scroll, .home__to__contact__scroll, .home__scroll__divider__link, .home__expertises__card__top__button, .home__expertises__card__middle a.page__button');
+      const btn = e.target.closest('.page__button__scroll, .home__to__contact__scroll, .home__scroll__divider__link');
       if (btn) {
         e.preventDefault();
         e.stopPropagation();
@@ -251,6 +300,10 @@
           </div>
           <div class="page__button__scroll__text" data-v-d4ca9408="">
             <p data-v-d4ca9408="">
+              <span class="btn-line">INICIAR</span>
+              <span class="btn-line">PROJETO</span>
+            </p>
+            <p data-v-d4ca9408="" aria-hidden="true">
               <span class="btn-line">INICIAR</span>
               <span class="btn-line">PROJETO</span>
             </p>
@@ -533,15 +586,61 @@
       }
     });
 
+    // Ensure all Planejar Projeto elements display correctly and point to QUIZZ_URL
+    document.querySelectorAll('.page__button__language').forEach(el => {
+      el.setAttribute('href', QUIZZ_URL);
+      el.style.textDecoration = 'none';
+      el.style.cursor = 'pointer';
+      el.setAttribute('role', 'link');
+      el.setAttribute('aria-label', 'Planejar Projeto');
+      el.setAttribute('title', 'Planejar Projeto');
+
+      const textEl = el.querySelector('.page__button__language__button__text p');
+      if (textEl && textEl.textContent.trim() !== 'Planejar Projeto') {
+        textEl.innerHTML = 'Planejar Projeto';
+      }
+      const navEl = el.querySelector('.page__button__language__nav');
+      if (navEl) {
+        navEl.style.display = 'none';
+      }
+    });
+
+    // Update About section button to Planejar Projeto
+    document.querySelectorAll('.home__about__right a.page__button').forEach(btn => {
+      btn.setAttribute('href', QUIZZ_URL);
+      btn.setAttribute('aria-label', 'Planejar Projeto');
+      btn.setAttribute('title', 'Planejar Projeto');
+      const txt = btn.querySelector('.page__button__text p');
+      if (txt && txt.textContent.trim() !== 'Planejar Projeto') {
+        txt.textContent = 'Planejar Projeto';
+      }
+    });
+
+    // Update Cards buttons to Planejar Projeto
+    document.querySelectorAll('.home__expertises__card .page__button.arrow, .home__expertises__card__middle a.page__button').forEach(btn => {
+      btn.setAttribute('href', QUIZZ_URL);
+      btn.setAttribute('aria-label', 'Planejar Projeto');
+      btn.setAttribute('title', 'Planejar Projeto');
+      const txt = btn.querySelector('.page__button__text p');
+      if (txt && txt.textContent.trim() !== 'Planejar Projeto') {
+        txt.textContent = 'Planejar Projeto';
+      }
+    });
+    document.querySelectorAll('.home__expertises__card__top__button').forEach(btn => {
+      btn.setAttribute('href', QUIZZ_URL);
+      btn.setAttribute('aria-label', 'Planejar Projeto');
+      btn.setAttribute('title', 'Planejar Projeto');
+    });
+
     ensureCardsDivider();
     updateAllContactLinksDOM();
     applyMenuVideos();
     updateCardVideosPlayback();
     handleCardVideoErrors();
 
-    // Atualiza links de redirecionamento para o novo link
-    document.querySelectorAll('.home__expertises__card__top__button, .home__expertises__card__middle a.page__button, .home__scroll__divider__link').forEach(btn => {
-      btn.setAttribute('href', TARGET_REDIRECT_URL);
+    // Scroll divider link points to INICIAR_PROJETO_URL
+    document.querySelectorAll('.home__scroll__divider__link').forEach(btn => {
+      btn.setAttribute('href', INICIAR_PROJETO_URL);
     });
 
     // Ensure all INICIAR PROJETO buttons have link accessibility attributes
@@ -553,10 +652,14 @@
       btn.style.cursor = 'pointer';
     });
 
-    const heroScrollText = document.querySelector('.page__hero__bottom__middle .page__button__scroll__text');
-    if (heroScrollText && (!heroScrollText.textContent.includes('INICIAR') || heroScrollText.textContent.includes('E\nx'))) {
-      heroScrollText.innerHTML = '<p data-v-d4ca9408=""><span class="btn-line">INICIAR</span><span class="btn-line">PROJETO</span></p>';
-    }
+    const dualPContent = '<p data-v-d4ca9408=""><span class="btn-line">INICIAR</span><span class="btn-line">PROJETO</span></p><p data-v-d4ca9408="" aria-hidden="true"><span class="btn-line">INICIAR</span><span class="btn-line">PROJETO</span></p>';
+    document.querySelectorAll('.page__button__scroll__text').forEach(st => {
+      const txt = (st.textContent || '').trim().replace(/\s+/g, ' ');
+      const pElements = st.querySelectorAll('p');
+      if (!txt.includes('INICIAR') || !txt.includes('PROJETO') || st.innerHTML.includes('<span>E</span>') || txt.includes('Explore') || txt.includes('EXPLORE') || pElements.length < 2) {
+        st.innerHTML = dualPContent;
+      }
+    });
     const heroTitles = document.querySelectorAll('.page__hero__middle h2, .page__hero__middle__title2');
     heroTitles.forEach(el => {
       if (el && (el.innerHTML.includes('sistema. Ex') || el.innerHTML.includes('<em>sistema') || !el.innerHTML.includes('<em>Experimente</em>'))) {
@@ -695,18 +798,21 @@
 }
 
 .page__button__scroll .page__button__scroll__text {
-  position: relative !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
   z-index: 5 !important;
   text-align: center !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  width: 100% !important;
-  height: 100% !important;
   pointer-events: none !important;
-  overflow: visible !important;
-  padding: 4px !important;
+  overflow: hidden !important;
+  border-radius: 50% !important;
   box-sizing: border-box !important;
+  padding: 6px !important;
 }
 
 .page__button__scroll .page__button__scroll__text p {
@@ -714,7 +820,7 @@
   font-family: ibm-plex-mono, monospace, sans-serif !important;
   font-weight: 700 !important;
   font-style: italic !important;
-  letter-spacing: 0.04em !important;
+  letter-spacing: 0.03em !important;
   line-height: 1.15 !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -726,25 +832,45 @@
   text-align: center !important;
   gap: 2px !important;
   width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  transition: transform 0.4s cubic-bezier(.215,.61,.355,1) !important;
+  will-change: transform !important;
 }
 
 .page__button__scroll .page__button__scroll__text p:nth-child(2) {
-  display: none !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+}
+
+html.device-mouse .page__button__scroll:hover .page__button__scroll__text p,
+.page__button__scroll:hover .page__button__scroll__text p {
+  transform: translateY(-100%) !important;
+}
+
+.page__button__scroll .page__button__scroll__text p span {
+  transform: none !important;
+  transition: none !important;
 }
 
 .page__button__scroll .page__button__scroll__text .btn-line,
 .page__button__scroll .page__button__scroll__text span {
   display: block !important;
   font-family: ibm-plex-mono, monospace, sans-serif !important;
-  font-size: clamp(11px, 9.5px + 0.002 * 100vw, 12.5px) !important;
+  font-size: clamp(9.5px, 8.5px + 0.0025 * 100vw, 11.5px) !important;
   font-weight: 700 !important;
   font-style: italic !important;
-  letter-spacing: 0.04em !important;
+  letter-spacing: 0.03em !important;
   line-height: 1.15 !important;
   text-transform: uppercase !important;
   color: #2b3014 !important;
   white-space: nowrap !important;
   text-align: center !important;
+  pointer-events: none !important;
 }
 </style>
 
@@ -1000,7 +1126,72 @@ body.menu-open .nav__menu__menu {
   }
 }
 </style>
-</head><body data-template="index" data-color="grey"><div id="__nuxt"><main class="wrapper"><nav class="" data-v-16b90765=""><div class="nav__inner" data-v-16b90765=""><div class="nav__logo" data-v-16b90765=""><a aria-current="page" href="/pt" class="router-link-active router-link-exact-active nav__logo1" aria-label="jimdev" data-v-16b90765=""><svg width="93.126" height="35" viewBox="0 0 93.126 35" fill="none" xmlns="http://www.w3.org/2000/svg" data-v-16b90765=""><path d="M1.530 31.998C3.774 31.998 5.576 31.420 5.576 28.156L5.576 9.422L2.822 9.422L2.822 28.020C2.822 29.210 2.210 29.720 1.020 29.720C0.714 29.720 0.408 29.686 0.068 29.618L0 29.618L0 31.862C0.442 31.930 0.918 31.998 1.530 31.998M2.822 6.090L5.576 6.090L5.576 2.690L2.822 2.690 M9.316 27L12.070 27L12.070 9.422L9.316 9.422M9.316 6.090L12.070 6.090L12.070 2.690L9.316 2.690 M15.810 27L18.564 27L18.564 16.052C18.564 13.298 20.944 11.326 23.086 11.326C24.888 11.326 26.112 12.618 26.112 14.794L26.112 27L28.866 27L28.866 16.052C28.866 13.298 30.906 11.326 33.184 11.326C34.952 11.326 36.414 12.618 36.414 14.794L36.414 27L39.168 27L39.168 14.658C39.168 11.020 36.958 9.014 33.830 9.014C31.688 9.014 29.580 10.136 28.458 12.142L28.390 12.142C27.642 10.102 25.942 9.014 23.800 9.014C21.590 9.014 19.720 10.238 18.632 11.938L18.564 11.938L18.564 9.422L15.810 9.422 M49.606 27.510C52.088 27.510 53.720 26.558 55.046 24.858L55.114 24.858L55.114 27L57.868 27L57.868 2.690L55.114 2.690L55.114 11.904L55.046 11.904C53.924 10.238 52.020 9.014 49.538 9.014C45.186 9.014 41.820 12.414 41.820 18.262C41.820 23.906 44.812 27.510 49.606 27.510M49.708 25.198C46.342 25.198 44.642 22.274 44.642 18.296C44.642 14.352 46.342 11.360 49.674 11.360C53.312 11.360 55.284 14.216 55.284 18.296C55.284 22.274 53.618 25.198 49.708 25.198 M69.122 27.476C73.100 27.476 75.854 25.334 76.670 21.560L73.984 21.560C73.372 23.940 71.672 25.164 69.122 25.164C65.586 25.164 63.648 22.444 63.444 18.874L77.044 18.874C77.044 13.060 74.222 8.980 68.952 8.980C63.954 8.980 60.622 13.128 60.622 18.228C60.622 23.328 63.750 27.476 69.122 27.476M68.952 11.156C72.114 11.156 73.916 13.298 74.086 16.800L63.512 16.800C63.920 13.604 65.688 11.156 68.952 11.156 M83.742 27L86.802 27L93.126 9.422L90.270 9.422L86.564 20.574C86.054 22.104 85.408 24.280 85.408 24.280L85.340 24.280C85.340 24.280 84.694 22.138 84.184 20.574L80.546 9.422L77.588 9.422" fill="currentColor" data-v-16b90765=""></path></svg></a><a aria-current="page" href="/pt" class="router-link-active router-link-exact-active nav__logo2" aria-label="jimdev" data-v-16b90765=""><svg width="36" height="45" viewBox="0 0 36 45" fill="none" xmlns="http://www.w3.org/2000/svg" data-v-16b90765=""><path d="M16.372 41.468C19.276 41.468 21.608 40.720 21.608 36.496L21.608 12.252L18.044 12.252L18.044 36.320C18.044 37.860 17.252 38.520 15.712 38.520C15.316 38.520 14.920 38.476 14.480 38.388L14.392 38.388L14.392 41.292C14.964 41.380 15.580 41.468 16.372 41.468M18.044 7.940L21.608 7.940L21.608 3.540L18.044 3.540" fill="currentColor" data-v-16b90765=""></path></svg></a></div><div class="nav__menu" data-v-16b90765="" data-v-3d548da1=""><div class="nav__menu__button" data-v-3d548da1=""><div class="nav__menu__button__text" data-v-3d548da1=""><p data-v-3d548da1="">Menu</p></div><div class="nav__menu__button__lines" data-v-3d548da1=""><div class="nav__menu__button__line" data-v-3d548da1=""></div><div class="nav__menu__button__line" data-v-3d548da1=""></div><div class="nav__menu__button__line" data-v-3d548da1=""></div></div></div><div class="nav__menu__menu" data-v-3d548da1=""><div class="nav__menu__menu__bg" data-v-3d548da1=""></div><div class="nav__menu__menu__inner" data-v-3d548da1=""><div class="nav__menu__menu__top" data-v-3d548da1=""><div class="nav__menu__menu__top__left" data-v-3d548da1=""></div><div class="nav__menu__menu__top__middle" data-v-3d548da1=""><p data-v-3d548da1="">site, sistema</p></div><div class="nav__menu__menu__top__right" data-v-3d548da1=""><div class="nav__menu__menu__close" data-v-3d548da1=""><div class="nav__menu__menu__close__inner" data-v-3d548da1=""><div class="nav__menu__menu__close1" data-v-3d548da1=""><div class="nav__menu__menu__close__inner__inner" data-v-3d548da1=""></div></div><div class="nav__menu__menu__close2" data-v-3d548da1=""><div class="nav__menu__menu__close__inner__inner" data-v-3d548da1=""></div></div></div></div></div></div><div class="nav__menu__menu__middle" data-v-3d548da1=""><div class="nav__menu__menu__middle__company" data-v-3d548da1=""><div class="nav__menu__menu__middle__company__top" data-v-3d548da1=""><h2 data-v-3d548da1="">Empresa</h2></div><div class="nav__menu__menu__middle__company__middle" data-v-3d548da1=""><a href="https://wa.me/5596999130553?text=Ol%C3%A1!%20Tenho%20interesse%20em%20saber%20mais%20sobre%20o%20site%20e%20sistema%20para%20meu%20est%C3%BAdio%20de%20tatuagem." target="_blank" rel="noopener noreferrer" class="page__menu__button" data-v-3d548da1="" data-v-f3e277a2=""><div class="page__menu__button__arrow__container" data-v-f3e277a2=""><div class="page__menu__button__arrow" data-v-f3e277a2=""></div></div><p data-v-f3e277a2="">Contato</p></a></div><div class="nav__menu__menu__middle__company__bottom" data-v-3d548da1=""><div class="page__button__language menu" data-v-3d548da1="" data-v-98d4d7d3=""><div class="page__button__language__button" data-v-98d4d7d3=""><div class="page__button__language__button__icon" data-v-98d4d7d3=""></div><div class="page__button__language__button__text" data-v-98d4d7d3=""><p data-v-98d4d7d3=""><span>P</span><span>o</span><span>r</span><span>t</span><span>u</span><span>g</span><span>u</span><span>ê</span><span>s</span></p></div><div class="page__button__language__button__arrow" data-v-98d4d7d3=""></div></div><div class="page__button__language__nav" data-v-98d4d7d3=""><a href="/" class="page__button__language__nav__button" data-v-98d4d7d3=""><div class="page__button__language__nav__button__icon" data-v-98d4d7d3=""></div><p data-v-98d4d7d3=""> English </p></a><a aria-current="page" href="/pt" class="router-link-active router-link-exact-active page__button__language__nav__button" data-v-98d4d7d3=""><div class="page__button__language__nav__button__icon" data-v-98d4d7d3=""></div><p data-v-98d4d7d3=""> Português </p></a></div></div></div></div><div class="nav__menu__menu__middle__expertises" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertises__top" data-v-3d548da1=""><h2 data-v-3d548da1="">Expertise</h2></div><div class="nav__menu__menu__middle__expertises__middle" data-v-3d548da1=""><!--[--><!--[--><a href="/pt/expertise/mining" class="nav__menu__menu__middle__expertise" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__img" data-v-3d548da1=""><!----></div><div class="nav__menu__menu__middle__expertise__info" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__title" data-v-3d548da1=""><span data-v-3d548da1="">01. </span> Login</div><p class="nav__menu__menu__middle__expertise__description" data-v-3d548da1="">De início é muito importante assim que você entrar no site você tem que criar uma conta. E essa mesma conta criada, senha e gmail, vai ser usada para entrar no painel do sistema teste. Faça seu agendamento como um cliente faria e entre no sistema para verificar as funcionalidades práticas.</p></div></a><div class="nav__menu__menu__middle__expertises__middle__line" data-v-3d548da1=""></div><!--]--><!--[--><a href="/pt/expertise/real-estate" class="nav__menu__menu__middle__expertise" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__img" data-v-3d548da1=""><!----></div><div class="nav__menu__menu__middle__expertise__info" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__title" data-v-3d548da1=""><span data-v-3d548da1="">02. </span> O que será entregado</div><p class="nav__menu__menu__middle__expertise__description" data-v-3d548da1="">De forma resumida será entregue um site personalizado, um sistema que gerencia tudo e um aplicativo para seu negócio. Tudo completo, seguro e personalizado.</p></div></a><div class="nav__menu__menu__middle__expertises__middle__line" data-v-3d548da1=""></div><!--]--><!--[--><a href="/pt/expertise/investments" class="nav__menu__menu__middle__expertise" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__img" data-v-3d548da1=""><!----></div><div class="nav__menu__menu__middle__expertise__info" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__title" data-v-3d548da1=""><span data-v-3d548da1="">03. </span> Seu projeto</div><p class="nav__menu__menu__middle__expertise__description" data-v-3d548da1="">É importante destacar que esse é um projeto teste em que você experimenta as funcionalidades do projeto e que, caso você queira fazer esse investimento no seu negócio, seu projeto será personalizado, diferente ou até melhor com mais funcionalidades e segurança garantida. Mas também tem a escolha de querer algo no modelo desse projeto teste.</p></div></a><!----><!--]--><!--]--></div><div class="nav__menu__menu__middle__expertises__bottom" data-v-3d548da1=""><div class="page__button__language menu" data-v-3d548da1="" data-v-98d4d7d3=""><div class="page__button__language__button" data-v-98d4d7d3=""><div class="page__button__language__button__icon" data-v-98d4d7d3=""></div><div class="page__button__language__button__text" data-v-98d4d7d3=""><p data-v-98d4d7d3=""><span>P</span><span>o</span><span>r</span><span>t</span><span>u</span><span>g</span><span>u</span><span>ê</span><span>s</span></p></div><div class="page__button__language__button__arrow" data-v-98d4d7d3=""></div></div><div class="page__button__language__nav" data-v-98d4d7d3=""><a href="/" class="page__button__language__nav__button" data-v-98d4d7d3=""><div class="page__button__language__nav__button__icon" data-v-98d4d7d3=""></div><p data-v-98d4d7d3=""> English </p></a><a aria-current="page" href="/pt" class="router-link-active router-link-exact-active page__button__language__nav__button" data-v-98d4d7d3=""><div class="page__button__language__nav__button__icon" data-v-98d4d7d3=""></div><p data-v-98d4d7d3=""> Português </p></a></div></div></div></div></div></div></div></div></div></nav><div class="content"><!--[--><div class="page__container page__section__grey" data-v-e184c758=""><span data-v-e184c758=""></span><div class="page__hero home home__hero" data-v-e184c758="" data-v-f61586af=""><div class="page__hero__top" data-v-f61586af=""><h1 data-v-f61586af="">site, sistema</h1></div><div class="page__hero__middle split__title" data-v-f61586af=""><div class="page__hero__middle__inner" data-v-f61586af=""><p class="page__hero__middle__header" data-v-f61586af="">site, sistema</p><h2 data-v-f61586af=""><!--[--><!--[--><p><!--[--><!--[--><!--[--><!--[--><!---->Não imagine seu estúdio de tatuagem<!--]--><!--[--><br>com site e sistema.<!--]--><!--[--><br><!--]--><!--]--><em><!--[--><!--[--><!--[--><!--[--><!---->Experimente<!--]--><!--]--><!--]--><!--]--></em><!--[--><!--[--><!---->.<!--]--><!--]--><!--]--><!--]--></p><!--]--><!--]--></h2><!----></div></div><div class="page__hero__bottom" data-v-f61586af=""><div class="page__hero__bottom__left" data-v-f61586af=""><div class="page__button__language" data-v-f61586af="" data-v-98d4d7d3=""><div class="page__button__language__button" data-v-98d4d7d3=""><div class="page__button__language__button__icon" data-v-98d4d7d3=""></div><div class="page__button__language__button__text" data-v-98d4d7d3=""><p data-v-98d4d7d3=""><span>P</span><span>t</span></p></div><div class="page__button__language__button__arrow" data-v-98d4d7d3=""></div></div><div class="page__button__language__nav" data-v-98d4d7d3=""><a href="/" class="page__button__language__nav__button" data-v-98d4d7d3=""><div class="page__button__language__nav__button__icon" data-v-98d4d7d3=""></div><p data-v-98d4d7d3=""> English </p></a><a aria-current="page" href="/pt" class="router-link-active router-link-exact-active page__button__language__nav__button" data-v-98d4d7d3=""><div class="page__button__language__nav__button__icon" data-v-98d4d7d3=""></div><p data-v-98d4d7d3=""> Português </p></a></div></div></div><div class="page__hero__bottom__middle" data-v-f61586af=""><div class="page__button__scroll" data-v-f61586af="" data-v-d4ca9408=""><div class="page__button__scroll__circles" data-v-d4ca9408=""><div class="page__button__scroll__circle" data-v-d4ca9408=""></div><div class="page__button__scroll__circle clone" data-v-d4ca9408=""></div><div class="page__button__scroll__circle clone" data-v-d4ca9408=""></div><div class="page__button__scroll__circle clone" data-v-d4ca9408=""></div></div><div class="page__button__scroll__text" data-v-d4ca9408=""><p data-v-d4ca9408=""><span class="btn-line">INICIAR</span><span class="btn-line">PROJETO</span></p></div></div></div><div class="page__hero__bottom__right" data-v-f61586af=""><a href="https://wa.me/5596999130553?text=Ol%C3%A1!%20Tenho%20interesse%20em%20saber%20mais%20sobre%20o%20site%20e%20sistema%20para%20meu%20est%C3%BAdio%20de%20tatuagem." target="_blank" rel="noopener noreferrer" class="page__button arrow" data-v-f61586af="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Fale Conosco</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div></div></div><div class="home__about" data-v-e184c758=""><div class="page__lines" data-v-e184c758=""><div class="page__line top left" data-v-e184c758=""></div><div class="page__line bottom right" data-v-e184c758=""></div></div><div class="home__about__left" data-v-e184c758=""><h2 class="home__about__title" data-v-e184c758=""><!--[--><!--[--><p><!--[--><!--[--><!--[--><!--[--><!---->Não imagine seu estúdio de tatuagem<!--]--><!--[--><br>com site e sistema.<!--]--><!--[--><br><!--]--><!--]--><em><!--[--><!--[--><!--[--><!--[--><!---->Experimente<!--]--><!--]--><!--]--><!--]--></em><!--[--><!--[--><!---->.<!--]--><!--]--><!--]--><!--]--></p><!--]--><!--]--></h2><p class="home__about__subtitle" data-v-e184c758="">Um site profissional muda como o cliente te enxerga e como ele avalia seu preço. Teste grátis e veja o efeito na prática.</p></div><div class="home__about__right" data-v-e184c758=""><div class="page__lines" data-v-e184c758=""><div class="page__line left top" data-v-e184c758=""></div><div class="page__line bottom right" data-v-e184c758=""></div></div><p class="home__about__header" data-v-e184c758="">TESTE REAL, PRODUTO REAL</p><p class="home__about__description" data-v-e184c758="">Nada de mockup. Você navega pelo site de agendamento e pelo painel completo exatamente como seus clientes e sua equipe usariam no dia a dia. Agendamento em segundos, 24 horas por dia, sem depender de você estar de celular na mão. Mais gente agenda, mais gente aparece, mais dinheiro entra.</p><a href="/pt/about" class="page__button arrow" data-v-e184c758="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Sobre nós</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div></div><div id="home-expertises" class="home__expertises" data-v-e184c758="" data-v-e1fc8da8=""><div class="home__expertises__top" data-v-e1fc8da8=""><div class="home__expertises__top__inner" data-v-e1fc8da8=""><h2 class="home__expertises__header" data-v-e1fc8da8="">ANTES DE EXPLORAR NAVEGUE COM CONTEXTO</h2><div class="home__expertises__title split__lines" data-v-e1fc8da8=""><!--[--><!--[--><p><!--[--><!--[--><!--[--><!--[--><!---->Dê uma olhada com atenção em cada etapa abaixo — <!--]--><!--[--><br>é o mapa que vai guiar sua experiência sem travar em nenhum <!--]--><!--]--><em><!--[--><!--[--><!--[--><!--[--><!---->passo<!--]--><!--]--><!--]--><!--]--></em><!--[--><!--[--><!---->.<!--]--><!--]--><!--]--><!--]--></p><!--]--><!--]--></div><p class="home__expertises__description" data-v-e1fc8da8="">Os cards abaixo mostram o caminho ideal pra testar sem travar em nenhuma etapa e sem passar batido por nenhum detalhe importante.</p><div class="home__expertises__cards__lines" data-v-e1fc8da8=""><div class="home__expertises__cards__lines__inner" data-v-e1fc8da8=""><div class="page__nav" data-v-e1fc8da8=""><!--[--><div class="selected page__nav__button" data-v-e1fc8da8=""></div><div class="page__nav__button" data-v-e1fc8da8=""></div><div class="page__nav__button" data-v-e1fc8da8=""></div><!--]--></div></div></div></div></div><div class="home__expertises__cards" data-v-e1fc8da8=""><div class="home__expertises__cards__container" data-v-e1fc8da8=""><!--[--><div class="home__expertises__card" data-v-e1fc8da8=""><div class="home__expertises__card__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__top" data-v-e1fc8da8=""><div class="home__expertises__card__top__info" data-v-e1fc8da8=""><h3 data-v-e1fc8da8=""><span data-v-e1fc8da8="">01.</span><p data-v-e1fc8da8="">Login</p></h3></div><a href="https://sitetestetattoo-com.vercel.app" class="home__expertises__card__top__button" data-v-e1fc8da8=""><div class="home__expertises__card__top__button__hover" data-v-e1fc8da8=""></div><div class="home__expertises__card__top__button__arrow" data-v-e1fc8da8=""></div></a></div><div class="home__expertises__card__middle" data-v-e1fc8da8=""><div class="home__expertises__card__middle__inner" data-v-e1fc8da8=""><p class="home__expertises__card__middle__description" data-v-e1fc8da8="">De início é muito importante assim que você entrar no site você tem que criar uma conta. E essa mesma conta criada, senha e gmail, vai ser usada para entrar no painel do sistema teste. Faça seu agendamento como um cliente faria e entre no sistema para verificar as funcionalidades práticas.</p><a href="https://sitetestetattoo-com.vercel.app" class="page__button arrow" data-v-e1fc8da8="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Explore</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div><div class="home__expertises__card__middle__video" data-v-e1fc8da8=""><div class="home__expertises__card__middle__video__container" data-v-e1fc8da8=""><video muted="" playsinline="" loop="" preload="none" crossorigin="anonymous" data-v-e1fc8da8=""><source type="video/mp4" src="media/login-tattoo.mp4" data-v-e1fc8da8=""></video></div></div></div></div></div></div></div><div class="home__expertises__card" data-v-e1fc8da8=""><div class="home__expertises__card__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__top" data-v-e1fc8da8=""><div class="home__expertises__card__top__info" data-v-e1fc8da8=""><h3 data-v-e1fc8da8=""><span data-v-e1fc8da8="">02.</span><p data-v-e1fc8da8="">O que será entregado</p></h3></div><a href="https://sitetestetattoo-com.vercel.app" class="home__expertises__card__top__button" data-v-e1fc8da8=""><div class="home__expertises__card__top__button__hover" data-v-e1fc8da8=""></div><div class="home__expertises__card__top__button__arrow" data-v-e1fc8da8=""></div></a></div><div class="home__expertises__card__middle" data-v-e1fc8da8=""><div class="home__expertises__card__middle__inner" data-v-e1fc8da8=""><p class="home__expertises__card__middle__description" data-v-e1fc8da8="">De forma resumida será entregado um site personalizado, um sistema que gerencia tudo e um aplicativo para seu negócio. Tudo completo, seguro e personalizado.</p><a href="https://sitetestetattoo-com.vercel.app" class="page__button arrow" data-v-e1fc8da8="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Explore</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div><div class="home__expertises__card__middle__video" data-v-e1fc8da8=""><div class="home__expertises__card__middle__video__container" data-v-e1fc8da8=""><video muted="" playsinline="" loop="" preload="none" crossorigin="anonymous" data-v-e1fc8da8=""><source type="video/mp4" src="media/tattooprojeto.mp4" data-v-e1fc8da8=""></video></div></div></div></div></div></div></div><div class="home__expertises__card" data-v-e1fc8da8=""><div class="home__expertises__card__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__top" data-v-e1fc8da8=""><div class="home__expertises__card__top__info" data-v-e1fc8da8=""><h3 data-v-e1fc8da8=""><span data-v-e1fc8da8="">03.</span><p data-v-e1fc8da8="">Seu projeto</p></h3></div><a href="https://sitetestetattoo-com.vercel.app" class="home__expertises__card__top__button" data-v-e1fc8da8=""><div class="home__expertises__card__top__button__hover" data-v-e1fc8da8=""></div><div class="home__expertises__card__top__button__arrow" data-v-e1fc8da8=""></div></a></div><div class="home__expertises__card__middle" data-v-e1fc8da8=""><div class="home__expertises__card__middle__inner" data-v-e1fc8da8=""><p class="home__expertises__card__middle__description" data-v-e1fc8da8="">É importante destacar que esse é um projeto teste em que você experimenta as funcionalidades do projeto e que, caso você queira fazer esse investimento no seu negócio, seu projeto será personalizado, diferente ou até melhor com mais funcionalidades e segurança garantida. Mas também tem a escolha de querer algo no modelo desse projeto teste.</p><a href="https://sitetestetattoo-com.vercel.app" class="page__button arrow" data-v-e1fc8da8="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Explore</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div><div class="home__expertises__card__middle__video" data-v-e1fc8da8=""><div class="home__expertises__card__middle__video__container" data-v-e1fc8da8=""><video muted="" playsinline="" loop="" preload="none" crossorigin="anonymous" data-v-e1fc8da8=""><source type="video/mp4" src="media/aCyD4ydWJ-7kSWKi_investments-716.mp4" data-v-e1fc8da8=""></video></div></div></div></div></div></div></div><!--]--></div></div></div>
+
+<style id="custom-planejar-projeto-styles">
+.page__button__language__nav {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+.page__button__language {
+  text-decoration: none !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  max-width: 100% !important;
+}
+.page__button__language__button {
+  padding: 0 22px !important;
+  column-gap: 10px !important;
+  width: auto !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  display: flex !important;
+}
+.page__button__language p,
+.page__button__language__button__text p {
+  white-space: nowrap !important;
+  font-size: clamp(14px, 13px + .0022 * 100vw, 16px) !important;
+  letter-spacing: 0.02em !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+}
+.page__button__language.menu .page__button__language__button {
+  height: 56px !important;
+  padding: 0 20px !important;
+}
+@media (max-width: 768px) {
+  .page__hero__bottom__left .page__button__language__button {
+    height: 48px !important;
+    padding: 0 13px !important;
+    column-gap: 6px !important;
+  }
+  .page__hero__bottom__left .page__button__language p,
+  .page__hero__bottom__left .page__button__language__button__text p {
+    font-size: 11.5px !important;
+    white-space: nowrap !important;
+  }
+  .page__hero__bottom__left .page__button__language__button__icon {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  .page__hero__bottom__left .page__button__language__button__arrow {
+    width: 7px !important;
+    height: 7px !important;
+    margin-left: 2px !important;
+  }
+  .page__button__language.menu .page__button__language__button {
+    height: 46px !important;
+    padding: 0 15px !important;
+    column-gap: 7px !important;
+  }
+  .page__button__language.menu p {
+    font-size: 12px !important;
+  }
+}
+</style>
+
+</head><body data-template="index" data-color="grey"><div id="__nuxt"><main class="wrapper"><nav class="" data-v-16b90765=""><div class="nav__inner" data-v-16b90765=""><div class="nav__logo" data-v-16b90765=""><a aria-current="page" href="/pt" class="router-link-active router-link-exact-active nav__logo1" aria-label="jimdev" data-v-16b90765=""><svg width="93.126" height="35" viewBox="0 0 93.126 35" fill="none" xmlns="http://www.w3.org/2000/svg" data-v-16b90765=""><path d="M1.530 31.998C3.774 31.998 5.576 31.420 5.576 28.156L5.576 9.422L2.822 9.422L2.822 28.020C2.822 29.210 2.210 29.720 1.020 29.720C0.714 29.720 0.408 29.686 0.068 29.618L0 29.618L0 31.862C0.442 31.930 0.918 31.998 1.530 31.998M2.822 6.090L5.576 6.090L5.576 2.690L2.822 2.690 M9.316 27L12.070 27L12.070 9.422L9.316 9.422M9.316 6.090L12.070 6.090L12.070 2.690L9.316 2.690 M15.810 27L18.564 27L18.564 16.052C18.564 13.298 20.944 11.326 23.086 11.326C24.888 11.326 26.112 12.618 26.112 14.794L26.112 27L28.866 27L28.866 16.052C28.866 13.298 30.906 11.326 33.184 11.326C34.952 11.326 36.414 12.618 36.414 14.794L36.414 27L39.168 27L39.168 14.658C39.168 11.020 36.958 9.014 33.830 9.014C31.688 9.014 29.580 10.136 28.458 12.142L28.390 12.142C27.642 10.102 25.942 9.014 23.800 9.014C21.590 9.014 19.720 10.238 18.632 11.938L18.564 11.938L18.564 9.422L15.810 9.422 M49.606 27.510C52.088 27.510 53.720 26.558 55.046 24.858L55.114 24.858L55.114 27L57.868 27L57.868 2.690L55.114 2.690L55.114 11.904L55.046 11.904C53.924 10.238 52.020 9.014 49.538 9.014C45.186 9.014 41.820 12.414 41.820 18.262C41.820 23.906 44.812 27.510 49.606 27.510M49.708 25.198C46.342 25.198 44.642 22.274 44.642 18.296C44.642 14.352 46.342 11.360 49.674 11.360C53.312 11.360 55.284 14.216 55.284 18.296C55.284 22.274 53.618 25.198 49.708 25.198 M69.122 27.476C73.100 27.476 75.854 25.334 76.670 21.560L73.984 21.560C73.372 23.940 71.672 25.164 69.122 25.164C65.586 25.164 63.648 22.444 63.444 18.874L77.044 18.874C77.044 13.060 74.222 8.980 68.952 8.980C63.954 8.980 60.622 13.128 60.622 18.228C60.622 23.328 63.750 27.476 69.122 27.476M68.952 11.156C72.114 11.156 73.916 13.298 74.086 16.800L63.512 16.800C63.920 13.604 65.688 11.156 68.952 11.156 M83.742 27L86.802 27L93.126 9.422L90.270 9.422L86.564 20.574C86.054 22.104 85.408 24.280 85.408 24.280L85.340 24.280C85.340 24.280 84.694 22.138 84.184 20.574L80.546 9.422L77.588 9.422" fill="currentColor" data-v-16b90765=""></path></svg></a><a aria-current="page" href="/pt" class="router-link-active router-link-exact-active nav__logo2" aria-label="jimdev" data-v-16b90765=""><svg width="36" height="45" viewBox="0 0 36 45" fill="none" xmlns="http://www.w3.org/2000/svg" data-v-16b90765=""><path d="M16.372 41.468C19.276 41.468 21.608 40.720 21.608 36.496L21.608 12.252L18.044 12.252L18.044 36.320C18.044 37.860 17.252 38.520 15.712 38.520C15.316 38.520 14.920 38.476 14.480 38.388L14.392 38.388L14.392 41.292C14.964 41.380 15.580 41.468 16.372 41.468M18.044 7.940L21.608 7.940L21.608 3.540L18.044 3.540" fill="currentColor" data-v-16b90765=""></path></svg></a></div><div class="nav__menu" data-v-16b90765="" data-v-3d548da1=""><div class="nav__menu__button" data-v-3d548da1=""><div class="nav__menu__button__text" data-v-3d548da1=""><p data-v-3d548da1="">Menu</p></div><div class="nav__menu__button__lines" data-v-3d548da1=""><div class="nav__menu__button__line" data-v-3d548da1=""></div><div class="nav__menu__button__line" data-v-3d548da1=""></div><div class="nav__menu__button__line" data-v-3d548da1=""></div></div></div><div class="nav__menu__menu" data-v-3d548da1=""><div class="nav__menu__menu__bg" data-v-3d548da1=""></div><div class="nav__menu__menu__inner" data-v-3d548da1=""><div class="nav__menu__menu__top" data-v-3d548da1=""><div class="nav__menu__menu__top__left" data-v-3d548da1=""></div><div class="nav__menu__menu__top__middle" data-v-3d548da1=""><p data-v-3d548da1="">site, sistema</p></div><div class="nav__menu__menu__top__right" data-v-3d548da1=""><div class="nav__menu__menu__close" data-v-3d548da1=""><div class="nav__menu__menu__close__inner" data-v-3d548da1=""><div class="nav__menu__menu__close1" data-v-3d548da1=""><div class="nav__menu__menu__close__inner__inner" data-v-3d548da1=""></div></div><div class="nav__menu__menu__close2" data-v-3d548da1=""><div class="nav__menu__menu__close__inner__inner" data-v-3d548da1=""></div></div></div></div></div></div><div class="nav__menu__menu__middle" data-v-3d548da1=""><div class="nav__menu__menu__middle__company" data-v-3d548da1=""><div class="nav__menu__menu__middle__company__top" data-v-3d548da1=""><h2 data-v-3d548da1="">Empresa</h2></div><div class="nav__menu__menu__middle__company__middle" data-v-3d548da1=""><a href="https://wa.me/5596999130553?text=Ol%C3%A1!%20Tenho%20interesse%20em%20saber%20mais%20sobre%20o%20site%20e%20sistema%20para%20meu%20est%C3%BAdio%20de%20tatuagem." target="_blank" rel="noopener noreferrer" class="page__menu__button" data-v-3d548da1="" data-v-f3e277a2=""><div class="page__menu__button__arrow__container" data-v-f3e277a2=""><div class="page__menu__button__arrow" data-v-f3e277a2=""></div></div><p data-v-f3e277a2="">Contato</p></a></div><div class="nav__menu__menu__middle__company__bottom" data-v-3d548da1=""><a href="https://jimdevtattooquizz-com.vercel.app/" class="page__button__language menu" data-v-3d548da1="" data-v-98d4d7d3="" role="link" aria-label="Planejar Projeto" title="Planejar Projeto" style="text-decoration: none; cursor: pointer;"><div class="page__button__language__button" data-v-98d4d7d3=""><div class="page__button__language__button__icon" data-v-98d4d7d3=""></div><div class="page__button__language__button__text" data-v-98d4d7d3=""><p data-v-98d4d7d3="">Planejar Projeto</p></div><div class="page__button__language__button__arrow" data-v-98d4d7d3=""></div></div></a></div></div><div class="nav__menu__menu__middle__expertises" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertises__top" data-v-3d548da1=""><h2 data-v-3d548da1="">Expertise</h2></div><div class="nav__menu__menu__middle__expertises__middle" data-v-3d548da1=""><!--[--><!--[--><a href="/pt/expertise/mining" class="nav__menu__menu__middle__expertise" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__img" data-v-3d548da1=""><!----></div><div class="nav__menu__menu__middle__expertise__info" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__title" data-v-3d548da1=""><span data-v-3d548da1="">01. </span> Login</div><p class="nav__menu__menu__middle__expertise__description" data-v-3d548da1="">De início é muito importante assim que você entrar no site você tem que criar uma conta. E essa mesma conta criada, senha e gmail, vai ser usada para entrar no painel do sistema teste. Faça seu agendamento como um cliente faria e entre no sistema para verificar as funcionalidades práticas.</p></div></a><div class="nav__menu__menu__middle__expertises__middle__line" data-v-3d548da1=""></div><!--]--><!--[--><a href="/pt/expertise/real-estate" class="nav__menu__menu__middle__expertise" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__img" data-v-3d548da1=""><!----></div><div class="nav__menu__menu__middle__expertise__info" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__title" data-v-3d548da1=""><span data-v-3d548da1="">02. </span> O que será entregado</div><p class="nav__menu__menu__middle__expertise__description" data-v-3d548da1="">De forma resumida será entregue um site personalizado, um sistema que gerencia tudo e um aplicativo para seu negócio. Tudo completo, seguro e personalizado.</p></div></a><div class="nav__menu__menu__middle__expertises__middle__line" data-v-3d548da1=""></div><!--]--><!--[--><a href="/pt/expertise/investments" class="nav__menu__menu__middle__expertise" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__img" data-v-3d548da1=""><!----></div><div class="nav__menu__menu__middle__expertise__info" data-v-3d548da1=""><div class="nav__menu__menu__middle__expertise__title" data-v-3d548da1=""><span data-v-3d548da1="">03. </span> Seu projeto</div><p class="nav__menu__menu__middle__expertise__description" data-v-3d548da1="">É importante destacar que esse é um projeto teste em que você experimenta as funcionalidades do projeto e que, caso você queira fazer esse investimento no seu negócio, seu projeto será personalizado, diferente ou até melhor com mais funcionalidades e segurança garantida. Mas também tem a escolha de querer algo no modelo desse projeto teste.</p></div></a><!----><!--]--><!--]--></div><div class="nav__menu__menu__middle__expertises__bottom" data-v-3d548da1=""><a href="https://jimdevtattooquizz-com.vercel.app/" class="page__button__language menu" data-v-3d548da1="" data-v-98d4d7d3="" role="link" aria-label="Planejar Projeto" title="Planejar Projeto" style="text-decoration: none; cursor: pointer;"><div class="page__button__language__button" data-v-98d4d7d3=""><div class="page__button__language__button__icon" data-v-98d4d7d3=""></div><div class="page__button__language__button__text" data-v-98d4d7d3=""><p data-v-98d4d7d3="">Planejar Projeto</p></div><div class="page__button__language__button__arrow" data-v-98d4d7d3=""></div></div></a></div></div></div></div></div></div></div></nav><div class="content"><!--[--><div class="page__container page__section__grey" data-v-e184c758=""><span data-v-e184c758=""></span><div class="page__hero home home__hero" data-v-e184c758="" data-v-f61586af=""><div class="page__hero__top" data-v-f61586af=""><h1 data-v-f61586af="">site, sistema</h1></div><div class="page__hero__middle split__title" data-v-f61586af=""><div class="page__hero__middle__inner" data-v-f61586af=""><p class="page__hero__middle__header" data-v-f61586af="">site, sistema</p><h2 data-v-f61586af=""><!--[--><!--[--><p><!--[--><!--[--><!--[--><!--[--><!---->Não imagine seu estúdio de tatuagem<!--]--><!--[--><br>com site e sistema.<!--]--><!--[--><br><!--]--><!--]--><em><!--[--><!--[--><!--[--><!--[--><!---->Experimente<!--]--><!--]--><!--]--><!--]--></em><!--[--><!--[--><!---->.<!--]--><!--]--><!--]--><!--]--></p><!--]--><!--]--></h2><!----></div></div><div class="page__hero__bottom" data-v-f61586af=""><div class="page__hero__bottom__left" data-v-f61586af=""><a href="https://jimdevtattooquizz-com.vercel.app/" class="page__button__language" data-v-f61586af="" data-v-98d4d7d3="" role="link" aria-label="Planejar Projeto" title="Planejar Projeto" style="text-decoration: none; cursor: pointer;"><div class="page__button__language__button" data-v-98d4d7d3=""><div class="page__button__language__button__icon" data-v-98d4d7d3=""></div><div class="page__button__language__button__text" data-v-98d4d7d3=""><p data-v-98d4d7d3="">Planejar Projeto</p></div><div class="page__button__language__button__arrow" data-v-98d4d7d3=""></div></div></a></div><div class="page__hero__bottom__middle" data-v-f61586af=""><a href="https://sitetestetattoo-com.vercel.app" class="home__scroll__divider__link home__hero__scroll__link" style="text-decoration: none; display: flex; justify-content: center; align-items: center; cursor: pointer;"><div class="page__button__scroll" data-v-f61586af="" data-v-d4ca9408="" style="cursor: pointer;" role="link" aria-label="Iniciar Projeto" title="Iniciar Projeto" tabindex="0"><div class="page__button__scroll__circles" data-v-d4ca9408=""><div class="page__button__scroll__circle" data-v-d4ca9408=""></div><div class="page__button__scroll__circle clone" data-v-d4ca9408=""></div><div class="page__button__scroll__circle clone" data-v-d4ca9408=""></div><div class="page__button__scroll__circle clone" data-v-d4ca9408=""></div></div><div class="page__button__scroll__text" data-v-d4ca9408=""><p data-v-d4ca9408=""><span class="btn-line">INICIAR</span><span class="btn-line">PROJETO</span></p><p data-v-d4ca9408="" aria-hidden="true"><span class="btn-line">INICIAR</span><span class="btn-line">PROJETO</span></p></div></div></a></div><div class="page__hero__bottom__right" data-v-f61586af=""><a href="https://wa.me/5596999130553?text=Ol%C3%A1!%20Tenho%20interesse%20em%20saber%20mais%20sobre%20o%20site%20e%20sistema%20para%20meu%20est%C3%BAdio%20de%20tatuagem." target="_blank" rel="noopener noreferrer" class="page__button arrow" data-v-f61586af="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Fale Conosco</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div></div></div><div class="home__about" data-v-e184c758=""><div class="page__lines" data-v-e184c758=""><div class="page__line top left" data-v-e184c758=""></div><div class="page__line bottom right" data-v-e184c758=""></div></div><div class="home__about__left" data-v-e184c758=""><h2 class="home__about__title" data-v-e184c758=""><!--[--><!--[--><p><!--[--><!--[--><!--[--><!--[--><!---->Não imagine seu estúdio de tatuagem<!--]--><!--[--><br>com site e sistema.<!--]--><!--[--><br><!--]--><!--]--><em><!--[--><!--[--><!--[--><!--[--><!---->Experimente<!--]--><!--]--><!--]--><!--]--></em><!--[--><!--[--><!---->.<!--]--><!--]--><!--]--><!--]--></p><!--]--><!--]--></h2><p class="home__about__subtitle" data-v-e184c758="">Um site profissional muda como o cliente te enxerga e como ele avalia seu preço. Teste grátis e veja o efeito na prática.</p></div><div class="home__about__right" data-v-e184c758=""><div class="page__lines" data-v-e184c758=""><div class="page__line left top" data-v-e184c758=""></div><div class="page__line bottom right" data-v-e184c758=""></div></div><p class="home__about__header" data-v-e184c758="">TESTE REAL, PRODUTO REAL</p><p class="home__about__description" data-v-e184c758="">Nada de mockup. Você navega pelo site de agendamento e pelo painel completo exatamente como seus clientes e sua equipe usariam no dia a dia. Agendamento em segundos, 24 horas por dia, sem depender de você estar de celular na mão. Mais gente agenda, mais gente aparece, mais dinheiro entra.</p><a href="https://jimdevtattooquizz-com.vercel.app/" class="page__button arrow" data-v-e184c758="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Planejar Projeto</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div></div><div id="home-expertises" class="home__expertises" data-v-e184c758="" data-v-e1fc8da8=""><div class="home__expertises__top" data-v-e1fc8da8=""><div class="home__expertises__top__inner" data-v-e1fc8da8=""><h2 class="home__expertises__header" data-v-e1fc8da8="">ANTES DE EXPLORAR NAVEGUE COM CONTEXTO</h2><div class="home__expertises__title split__lines" data-v-e1fc8da8=""><!--[--><!--[--><p><!--[--><!--[--><!--[--><!--[--><!---->Dê uma olhada com atenção em cada etapa abaixo — <!--]--><!--[--><br>é o mapa que vai guiar sua experiência sem travar em nenhum <!--]--><!--]--><em><!--[--><!--[--><!--[--><!--[--><!---->passo<!--]--><!--]--><!--]--><!--]--></em><!--[--><!--[--><!---->.<!--]--><!--]--><!--]--><!--]--></p><!--]--><!--]--></div><p class="home__expertises__description" data-v-e1fc8da8="">Os cards abaixo mostram o caminho ideal pra testar sem travar em nenhuma etapa e sem passar batido por nenhum detalhe importante.</p><div class="home__expertises__cards__lines" data-v-e1fc8da8=""><div class="home__expertises__cards__lines__inner" data-v-e1fc8da8=""><div class="page__nav" data-v-e1fc8da8=""><!--[--><div class="selected page__nav__button" data-v-e1fc8da8=""></div><div class="page__nav__button" data-v-e1fc8da8=""></div><div class="page__nav__button" data-v-e1fc8da8=""></div><!--]--></div></div></div></div></div><div class="home__expertises__cards" data-v-e1fc8da8=""><div class="home__expertises__cards__container" data-v-e1fc8da8=""><!--[--><div class="home__expertises__card" data-v-e1fc8da8=""><div class="home__expertises__card__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__top" data-v-e1fc8da8=""><div class="home__expertises__card__top__info" data-v-e1fc8da8=""><h3 data-v-e1fc8da8=""><span data-v-e1fc8da8="">01.</span><p data-v-e1fc8da8="">Login</p></h3></div><a href="https://jimdevtattooquizz-com.vercel.app/" class="home__expertises__card__top__button" data-v-e1fc8da8=""><div class="home__expertises__card__top__button__hover" data-v-e1fc8da8=""></div><div class="home__expertises__card__top__button__arrow" data-v-e1fc8da8=""></div></a></div><div class="home__expertises__card__middle" data-v-e1fc8da8=""><div class="home__expertises__card__middle__inner" data-v-e1fc8da8=""><p class="home__expertises__card__middle__description" data-v-e1fc8da8="">De início é muito importante assim que você entrar no site você tem que criar uma conta. E essa mesma conta criada, senha e gmail, vai ser usada para entrar no painel do sistema teste. Faça seu agendamento como um cliente faria e entre no sistema para verificar as funcionalidades práticas.</p><a href="https://jimdevtattooquizz-com.vercel.app/" class="page__button arrow" data-v-e1fc8da8="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Planejar Projeto</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div><div class="home__expertises__card__middle__video" data-v-e1fc8da8=""><div class="home__expertises__card__middle__video__container" data-v-e1fc8da8=""><video muted="" playsinline="" loop="" preload="none" crossorigin="anonymous" data-v-e1fc8da8=""><source type="video/mp4" src="media/login-tattoo.mp4" data-v-e1fc8da8=""></video></div></div></div></div></div></div></div><div class="home__expertises__card" data-v-e1fc8da8=""><div class="home__expertises__card__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__top" data-v-e1fc8da8=""><div class="home__expertises__card__top__info" data-v-e1fc8da8=""><h3 data-v-e1fc8da8=""><span data-v-e1fc8da8="">02.</span><p data-v-e1fc8da8="">O que será entregado</p></h3></div><a href="https://jimdevtattooquizz-com.vercel.app/" class="home__expertises__card__top__button" data-v-e1fc8da8=""><div class="home__expertises__card__top__button__hover" data-v-e1fc8da8=""></div><div class="home__expertises__card__top__button__arrow" data-v-e1fc8da8=""></div></a></div><div class="home__expertises__card__middle" data-v-e1fc8da8=""><div class="home__expertises__card__middle__inner" data-v-e1fc8da8=""><p class="home__expertises__card__middle__description" data-v-e1fc8da8="">De forma resumida será entregado um site personalizado, um sistema que gerencia tudo e um aplicativo para seu negócio. Tudo completo, seguro e personalizado.</p><a href="https://jimdevtattooquizz-com.vercel.app/" class="page__button arrow" data-v-e1fc8da8="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Planejar Projeto</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div><div class="home__expertises__card__middle__video" data-v-e1fc8da8=""><div class="home__expertises__card__middle__video__container" data-v-e1fc8da8=""><video muted="" playsinline="" loop="" preload="none" crossorigin="anonymous" data-v-e1fc8da8=""><source type="video/mp4" src="media/tattooprojeto.mp4" data-v-e1fc8da8=""></video></div></div></div></div></div></div></div><div class="home__expertises__card" data-v-e1fc8da8=""><div class="home__expertises__card__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__inner__inner__inner" data-v-e1fc8da8=""><div class="home__expertises__card__top" data-v-e1fc8da8=""><div class="home__expertises__card__top__info" data-v-e1fc8da8=""><h3 data-v-e1fc8da8=""><span data-v-e1fc8da8="">03.</span><p data-v-e1fc8da8="">Seu projeto</p></h3></div><a href="https://jimdevtattooquizz-com.vercel.app/" class="home__expertises__card__top__button" data-v-e1fc8da8=""><div class="home__expertises__card__top__button__hover" data-v-e1fc8da8=""></div><div class="home__expertises__card__top__button__arrow" data-v-e1fc8da8=""></div></a></div><div class="home__expertises__card__middle" data-v-e1fc8da8=""><div class="home__expertises__card__middle__inner" data-v-e1fc8da8=""><p class="home__expertises__card__middle__description" data-v-e1fc8da8="">É importante destacar que esse é um projeto teste em que você experimenta as funcionalidades do projeto e que, caso você queira fazer esse investimento no seu negócio, seu projeto será personalizado, diferente ou até melhor com mais funcionalidades e segurança garantida. Mas também tem a escolha de querer algo no modelo desse projeto teste.</p><a href="https://jimdevtattooquizz-com.vercel.app/" class="page__button arrow" data-v-e1fc8da8="" data-v-421e7666=""><div class="page__button__text" data-v-421e7666=""><p data-v-421e7666="">Planejar Projeto</p></div><div class="page__button__arrow" data-v-421e7666=""><div class="page__button__arrow__inner page__button__arrow1" data-v-421e7666=""></div><div class="page__button__arrow__inner page__button__arrow2" data-v-421e7666=""></div></div></a></div><div class="home__expertises__card__middle__video" data-v-e1fc8da8=""><div class="home__expertises__card__middle__video__container" data-v-e1fc8da8=""><video muted="" playsinline="" loop="" preload="none" crossorigin="anonymous" data-v-e1fc8da8=""><source type="video/mp4" src="media/aCyD4ydWJ-7kSWKi_investments-716.mp4" data-v-e1fc8da8=""></video></div></div></div></div></div></div></div><!--]--></div></div></div>
 <div class="home__scroll__divider" style="display: flex; justify-content: center; align-items: center; padding: 70px 0 30px 0; width: 100%; position: relative; z-index: 5;">
   <a href="https://sitetestetattoo-com.vercel.app" class="home__scroll__divider__link" style="text-decoration: none; display: flex; justify-content: center; align-items: center; cursor: pointer;"><div class="page__button__scroll home__to__contact__scroll" data-v-d4ca9408="" style="cursor: pointer;" role="link" aria-label="Iniciar Projeto" title="Iniciar Projeto" tabindex="0">
     <div class="page__button__scroll__circles" data-v-d4ca9408="">
@@ -1010,10 +1201,8 @@ body.menu-open .nav__menu__menu {
       <div class="page__button__scroll__circle clone" data-v-d4ca9408=""></div>
     </div>
     <div class="page__button__scroll__text" data-v-d4ca9408="">
-      <p data-v-d4ca9408="">
-        <span class="btn-line">INICIAR</span>
-        <span class="btn-line">PROJETO</span>
-      </p>
+      <p data-v-d4ca9408=""><span class="btn-line">INICIAR</span><span class="btn-line">PROJETO</span></p>
+      <p data-v-d4ca9408="" aria-hidden="true"><span class="btn-line">INICIAR</span><span class="btn-line">PROJETO</span></p>
     </div>
   </div>
 </a>
